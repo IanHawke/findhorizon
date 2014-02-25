@@ -2,6 +2,227 @@ import numpy as np
 from scipy.integrate import ode
 from scipy.optimize import brentq, minimize, root
 
+class spacetime:
+    """
+    Define an axisymmetric spacetime.
+    """
+
+    def __init__(self, z_positions, masses, reflection_symmetric = True):
+        """
+        Initialize the spacetime given the location and masses of the
+        singularities.
+        """
+
+        self.reflection_symmetric = reflection_symmetric
+        self.z_positions = np.array(z_positions)
+        self.masses = np.array(masses)
+        self.N = len(z_positions)
+
+        if reflection_symmetric:
+            assert np.all(z_positions >= 0.0)
+
+    def expansion(self, theta, H):
+        """
+        Compute the expansion for the given spacetime at a fixed point.
+        """
+
+        h = H[0]
+        dhdtheta = H[1]
+
+        z_i = self.z_positions
+        m_i = self.masses
+
+        y = np.array([h * np.sin(theta), h * np.cos(theta)])
+        distance_i = np.zeros_like(z_i)
+        for i in range(len(z_i)):
+            distance_i[i] = np.linalg.norm(y - \
+                                           np.array([0, z_i[i]]), 2)
+
+        C = 1.0 / np.sqrt(1.0 + (dhdtheta / h) ** 2)
+        if (abs(theta) < 1e-16) or (abs(theta - np.pi) < 1e-16):
+            cot_theta_dhdtheta_C2 = 0.0
+        else:
+            cot_theta_dhdtheta_C2 = dhdtheta / (np.tan(theta) * C ** 2)
+
+        psi = 1.0
+        dpsi_dr = 0.0
+        dpsi_dtheta = 0.0
+        for i in range(len(m_i)):
+            psi += 0.5 * m_i[i] / distance_i[i]
+            dpsi_dr += 0.5 * m_i[i] * (z_i[i] * np.cos(theta) - h) / \
+                distance_i[i] ** 3
+            dpsi_dtheta += 0.5 * m_i[i] * h * (-z_i[i] * np.sin(theta)) / \
+                distance_i[i] ** 3
+
+        dHdtheta = np.zeros_like(H)
+        dHdtheta[0] = dhdtheta
+        dHdtheta[1] = 2.0 * h - cot_theta_dhdtheta_C2 + \
+            4.0 * h ** 2 / (psi * C ** 2) * \
+            (dpsi_dr - dpsi_dtheta * dhdtheta / h ** 2) + \
+            3.0 * dhdtheta ** 2 / h
+
+        return dHdtheta
+
+
+class trappedsurface:
+    """
+    Store any trapped surface, centred on a particular point.
+    """
+
+    def __init__(self, z_centre, spacetime):
+        """
+        Initialize a horizon centred on a particular point.
+        """
+
+        self.z_centre = 0.0
+        self.spacetime = spacetime
+
+    def find_r0(self, input_guess, full_horizon = False):
+        """
+        Given some initial guess, find the correct starting location
+        for the trapped surface using shooting.
+        """
+
+        # Define the shooting function if using matching (0 <= theta <= pi)
+        def shooting_function_full(r0):
+            """
+            The function used in the shooting algorithm.
+            Returns the error at the matching point.
+            """
+            dtheta = np.pi / 100.0
+
+            # First half of the horizon
+            H0 = np.array([r0[0], 0.0])
+            solver1 = ode(self.spacetime.expansion)
+            solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
+            solver1.set_initial_value(H0, 0.0)
+            while solver1.successful() and solver1.t < np.pi / 2.0:        
+                solver1.integrate(solver1.t + dtheta, step=1)
+            # Second half of the horizon
+            H0 = np.array([r0[1], 0.0])
+            solver2 = ode(self.spacetime.expansion)
+            solver2.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
+            solver2.set_initial_value(H0, np.pi)
+            while solver2.successful() and solver2.t > np.pi / 2.0:        
+                solver2.integrate(solver2.t - dtheta, step=1)
+
+            return solver1.y - solver2.y
+                                   
+        # Define the shooting function if symmetric (0 <= theta <= pi/2)
+        def shooting_function(r0):
+            """
+            The function used in the shooting algorithm.
+            Returns the error at the end point.
+            """
+            dtheta = np.pi / 100.0
+
+            H0 = np.array([r0, 0.0])
+            solver1 = ode(self.spacetime.expansion)
+            solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
+            solver1.set_initial_value(H0, 0.0)
+            while solver1.successful() and solver1.t < np.pi / 2.0:        
+                solver1.integrate(solver1.t + dtheta, step=1)
+
+            return solver1.y[1]
+
+        # Now find the horizon given the input guess
+        self.r0 = []
+        if (full_horizon or not self.spacetime.reflection_symmetric):
+            sol = root(shooting_function_full, input_guess)
+            self.r0 = sol.x
+        else:
+            sol = brentq(shooting_function, input_guess[0], \
+                             input_guess[1])
+            self.r0 = [sol]
+
+    def solve_given_r0(self, full_horizon = False):
+        """
+        Given the correct value for the initial radius, find the horizon.
+        """
+
+        dtheta = np.pi / 100.0
+
+        if (full_horizon or not self.spacetime.reflection_symmetric): 
+            # The solution needs computing for 0 <= theta <= pi
+            # First half of the horizon
+            theta1 = []
+            H1 = []
+            H0 = np.array([self.r0[0], 0.0])
+            solver1 = ode(self.spacetime.expansion)
+            solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
+            solver1.set_initial_value(H0, 0.0)
+            theta1.append(0.0)
+            H1.append(H0)
+            while solver1.successful() and solver1.t < np.pi / 2.0:        
+                solver1.integrate(solver1.t + dtheta, step=1)
+                H1.append(solver1.y)
+                theta1.append(solver1.t)
+            # Second half of the horizon
+            theta2 = []
+            H2 = []
+            H0 = np.array([self.r0[1], 0.0])
+            solver2 = ode(self.spacetime.expansion)
+            solver2.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
+            solver2.set_initial_value(H0, np.pi)
+            theta2.append(np.pi)
+            H2.append(H0)
+            while solver2.successful() and solver2.t > np.pi / 2.0:        
+                solver2.integrate(solver2.t - dtheta, step=1)
+                H2.append(solver2.y)
+                theta2.append(solver2.t)
+
+            H = np.vstack((np.array(H1), np.flipud(np.array(H2))))
+            theta = np.hstack((np.array(theta1), \
+                                        np.flipud(np.array(theta2))))
+                                   
+        else: # The solution needs computing for 0 <= theta <= pi / 2
+            theta1 = []
+            H1 = []
+            H0 = np.array([self.r0[0], 0.0])
+            solver1 = ode(self.spacetime.expansion)
+            solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
+            solver1.set_initial_value(H0, 0.0)
+            theta1.append(0.0)
+            H1.append(H0)
+            while solver1.successful() and solver1.t < np.pi / 2.0:        
+                solver1.integrate(solver1.t + dtheta, step=1)
+                H1.append(solver1.y)
+                theta1.append(solver1.t)
+            
+            H = np.vstack((np.array(H1), np.flipud(H1)))
+            theta = np.hstack((theta1, \
+                                   np.flipud(np.pi - np.array(theta1))))
+
+        # We now have the solution for 0 <= theta <= pi; 
+        # fill the remaining angles
+        self.H = np.vstack((H, np.flipud(H)))
+        self.theta = np.hstack((theta, theta + np.pi))
+
+        return None
+
+    def convert_to_cartesian(self):
+        """
+        When the solution is known in r, theta coordinates, compute
+        the locations in cartesian coordinates (2 and 3d).
+        """
+        
+        self.x = self.H[:, 0] * np.sin(self.theta)
+        self.z = self.z_centre + self.H[:, 0] * np.cos(self.theta)
+
+        phi = np.linspace(0.0, 2.0*np.pi, 20)
+        self.X = np.zeros((len(self.theta), len(phi)))
+        self.Y = np.zeros_like(self.X)
+        self.Z = np.zeros_like(self.X)
+        for t in range(len(self.theta)):
+            for p in range(len(phi)):
+                self.X[t, p] = self.H[t, 0] * np.sin(self.theta[t]) * \
+                    np.cos(phi[p])
+                self.Y[t, p] = self.H[t, 0] * np.sin(self.theta[t]) * \
+                    np.sin(phi[p])
+                self.Z[t, p] = self.H[t, 0] * np.cos(self.theta[t])
+        self.R = np.sqrt(self.X**2 + self.Y**2 + self.Z**2)
+
+        return None
 
 def expansion(theta, H, params):
     """
