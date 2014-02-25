@@ -19,7 +19,7 @@ class spacetime:
         self.N = len(z_positions)
 
         if reflection_symmetric:
-            assert np.all(z_positions >= 0.0)
+            assert np.all(np.array(z_positions) >= 0.0)
 
     def expansion(self, theta, H):
         """
@@ -97,14 +97,14 @@ class trappedsurface:
             solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver1.set_initial_value(H0, 0.0)
             while solver1.successful() and solver1.t < np.pi / 2.0:        
-                solver1.integrate(solver1.t + dtheta, step=1)
+                solver1.integrate(solver1.t + dtheta)
             # Second half of the horizon
             H0 = np.array([r0[1], 0.0])
             solver2 = ode(self.spacetime.expansion)
             solver2.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver2.set_initial_value(H0, np.pi)
-            while solver2.successful() and solver2.t > np.pi / 2.0:        
-                solver2.integrate(solver2.t - dtheta, step=1)
+            while solver2.successful() and solver2.t >= np.pi / 2.0 + 1e-12:
+                solver2.integrate(solver2.t - dtheta)
 
             return solver1.y - solver2.y
                                    
@@ -121,14 +121,14 @@ class trappedsurface:
             solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver1.set_initial_value(H0, 0.0)
             while solver1.successful() and solver1.t < np.pi / 2.0:        
-                solver1.integrate(solver1.t + dtheta, step=1)
+                solver1.integrate(solver1.t + dtheta)
 
             return solver1.y[1]
 
         # Now find the horizon given the input guess
         self.r0 = []
         if (full_horizon or not self.spacetime.reflection_symmetric):
-            sol = root(shooting_function_full, input_guess)
+            sol = root(shooting_function_full, input_guess, tol = 1.e-12)
             self.r0 = sol.x
         else:
             sol = brentq(shooting_function, input_guess[0], \
@@ -153,8 +153,8 @@ class trappedsurface:
             solver1.set_initial_value(H0, 0.0)
             theta1.append(0.0)
             H1.append(H0)
-            while solver1.successful() and solver1.t < np.pi / 2.0:        
-                solver1.integrate(solver1.t + dtheta, step=1)
+            while solver1.successful() and solver1.t < np.pi / 2.0:
+                solver1.integrate(solver1.t + dtheta)
                 H1.append(solver1.y)
                 theta1.append(solver1.t)
             # Second half of the horizon
@@ -166,8 +166,8 @@ class trappedsurface:
             solver2.set_initial_value(H0, np.pi)
             theta2.append(np.pi)
             H2.append(H0)
-            while solver2.successful() and solver2.t > np.pi / 2.0:        
-                solver2.integrate(solver2.t - dtheta, step=1)
+            while solver2.successful() and solver2.t >= np.pi / 2.0 + 1e-12:
+                solver2.integrate(solver2.t - dtheta)
                 H2.append(solver2.y)
                 theta2.append(solver2.t)
 
@@ -185,7 +185,7 @@ class trappedsurface:
             theta1.append(0.0)
             H1.append(H0)
             while solver1.successful() and solver1.t < np.pi / 2.0:        
-                solver1.integrate(solver1.t + dtheta, step=1)
+                solver1.integrate(solver1.t + dtheta)
                 H1.append(solver1.y)
                 theta1.append(solver1.t)
             
@@ -286,7 +286,7 @@ def shooting_function(h0, singularities, theta0=0.0, theta_end=np.pi / 2.0):
     dtheta = (theta_end - theta0) / 10.0
 
     while solver.successful() and solver.t < theta_end:
-        solver.integrate(solver.t + dtheta, step=1)
+        solver.integrate(solver.t + dtheta)
 
         H.append(solver.y)
         theta_out.append(solver.t)
@@ -310,7 +310,7 @@ def shooting_function_full(h0, singularities,
     dtheta = (theta_match - theta0) / 10.0
 
     while solver1.successful() and solver1.t < theta_match:
-        solver1.integrate(solver1.t + dtheta, step=1)
+        solver1.integrate(solver1.t + dtheta)
 
     H_0 = np.array([h0[1], 0.0])
     solver2 = ode(expansion)
@@ -321,7 +321,7 @@ def shooting_function_full(h0, singularities,
     dtheta = (theta_match - theta_end) / 10.0
 
     while solver2.successful() and solver2.t > theta_match:
-        solver2.integrate(solver2.t + dtheta, step=1)
+        solver2.integrate(solver2.t + dtheta)
 
     return solver1.y - solver2.y
 
@@ -353,7 +353,7 @@ def FindHorizonFull(input_guess, singularities, options=None):
     dtheta = np.pi / 100.0
 
     while solver1.successful() and solver1.t < np.pi / 2.0:
-        solver1.integrate(solver1.t + dtheta, step=1)
+        solver1.integrate(solver1.t + dtheta)
 
         H1.append(solver1.y)
         theta1.append(solver1.t)
@@ -371,7 +371,7 @@ def FindHorizonFull(input_guess, singularities, options=None):
     dtheta = -np.pi / 100.0
 
     while solver2.successful() and solver2.t > np.pi / 2.0:
-        solver2.integrate(solver2.t + dtheta, step=1)
+        solver2.integrate(solver2.t + dtheta)
 
         H2.append(solver2.y)
         theta2.append(solver2.t)
@@ -409,7 +409,7 @@ def FindHorizonSymmetric(input_guess, singularities, options=None):
     dtheta = np.pi / 100.0
 
     while solver.successful() and solver.t < np.pi / 2.0:
-        solver.integrate(solver.t + dtheta, step=1)
+        solver.integrate(solver.t + dtheta)
 
         H.append(solver.y)
         theta_out.append(solver.t)
