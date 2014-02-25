@@ -21,6 +21,20 @@ class spacetime:
         if reflection_symmetric:
             assert np.all(np.array(z_positions) >= 0.0)
 
+
+class trappedsurface:
+    """
+    Store any trapped surface, centred on a particular point.
+    """
+
+    def __init__(self, z_centre, spacetime):
+        """
+        Initialize a horizon centred on a particular point.
+        """
+
+        self.z_centre = z_centre
+        self.spacetime = spacetime
+
     def expansion(self, theta, H):
         """
         Compute the expansion for the given spacetime at a fixed point.
@@ -29,8 +43,8 @@ class spacetime:
         h = H[0]
         dhdtheta = H[1]
 
-        z_i = self.z_positions
-        m_i = self.masses
+        z_i = self.spacetime.z_positions - self.z_centre
+        m_i = self.spacetime.masses
 
         y = np.array([h * np.sin(theta), h * np.cos(theta)])
         distance_i = np.zeros_like(z_i)
@@ -63,20 +77,6 @@ class spacetime:
 
         return dHdtheta
 
-
-class trappedsurface:
-    """
-    Store any trapped surface, centred on a particular point.
-    """
-
-    def __init__(self, z_centre, spacetime):
-        """
-        Initialize a horizon centred on a particular point.
-        """
-
-        self.z_centre = 0.0
-        self.spacetime = spacetime
-
     def find_r0(self, input_guess, full_horizon = False):
         """
         Given some initial guess, find the correct starting location
@@ -93,14 +93,14 @@ class trappedsurface:
 
             # First half of the horizon
             H0 = np.array([r0[0], 0.0])
-            solver1 = ode(self.spacetime.expansion)
+            solver1 = ode(self.expansion)
             solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver1.set_initial_value(H0, 0.0)
             while solver1.successful() and solver1.t < np.pi / 2.0:        
                 solver1.integrate(solver1.t + dtheta)
             # Second half of the horizon
             H0 = np.array([r0[1], 0.0])
-            solver2 = ode(self.spacetime.expansion)
+            solver2 = ode(self.expansion)
             solver2.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver2.set_initial_value(H0, np.pi)
             while solver2.successful() and solver2.t >= np.pi / 2.0 + 1e-12:
@@ -117,7 +117,7 @@ class trappedsurface:
             dtheta = np.pi / 100.0
 
             H0 = np.array([r0, 0.0])
-            solver1 = ode(self.spacetime.expansion)
+            solver1 = ode(self.expansion)
             solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver1.set_initial_value(H0, 0.0)
             while solver1.successful() and solver1.t < np.pi / 2.0:        
@@ -148,7 +148,7 @@ class trappedsurface:
             theta1 = []
             H1 = []
             H0 = np.array([self.r0[0], 0.0])
-            solver1 = ode(self.spacetime.expansion)
+            solver1 = ode(self.expansion)
             solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver1.set_initial_value(H0, 0.0)
             theta1.append(0.0)
@@ -161,7 +161,7 @@ class trappedsurface:
             theta2 = []
             H2 = []
             H0 = np.array([self.r0[1], 0.0])
-            solver2 = ode(self.spacetime.expansion)
+            solver2 = ode(self.expansion)
             solver2.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver2.set_initial_value(H0, np.pi)
             theta2.append(np.pi)
@@ -179,7 +179,7 @@ class trappedsurface:
             theta1 = []
             H1 = []
             H0 = np.array([self.r0[0], 0.0])
-            solver1 = ode(self.spacetime.expansion)
+            solver1 = ode(self.expansion)
             solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver1.set_initial_value(H0, 0.0)
             theta1.append(0.0)
