@@ -342,42 +342,4 @@ def SolvePlotASymmetric(z = [-0.5, 0.5], mass = [1.0, 1.0],
 
 
 if __name__ == "__main__":
-    singularities = {"masses": np.array([1.0, 1.0]),
-                     "z_positions": np.array([-0.75, 0.75])}
-    theta, H = FindHorizonSymmetric([1.25, 1.3], singularities)
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
-    from matplotlib import cm
-    from matplotlib.ticker import LinearLocator
-    fig = plt.figure()
-    ax1 = fig.add_subplot(121)
-    ax1.plot(H[:, 0] * np.sin(theta),  H[:, 0] * np.cos(theta), 'b-')
-    ax1.plot(H[:, 0] * np.sin(theta), -H[:, 0] * np.cos(theta), 'b-')
-    ax1.plot(-H[:, 0] * np.sin(theta),  H[:, 0] * np.cos(theta), 'b-')
-    ax1.plot(-H[:, 0] * np.sin(theta), -H[:, 0] * np.cos(theta), 'b-')
-    ax1.plot(np.zeros(singularities['z_positions'].shape),
-             singularities['z_positions'],
-             'kx', markersize=12, markeredgewidth=2)
-    ax1.set_xlabel("$x$")
-    ax1.set_ylabel("$z$")
-    ax1.axis('equal')
-    ax2 = fig.add_subplot(122, projection='3d')
-    phi = np.linspace(0.0, 2.0 * np.pi, 20)
-    all_theta = np.hstack((theta, np.flipud(np.pi - theta)))
-    all_H = np.vstack((H, np.flipud(H)))
-    X = np.zeros((len(all_theta), len(phi)))
-    Y = np.zeros_like(X)
-    Z = np.zeros_like(X)
-    for t in range(len(all_theta)):
-        for p in range(len(phi)):
-            X[t, p] = all_H[t, 0] * np.sin(all_theta[t]) * np.cos(phi[p])
-            Y[t, p] = all_H[t, 0] * np.sin(all_theta[t]) * np.sin(phi[p])
-            Z[t, p] = all_H[t, 0] * np.cos(all_theta[t])
-    R = np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
-    surf = ax2.plot_surface(X, Y, Z,
-                            rstride=1, cstride=1, linewidth=0,
-                            facecolors=cm.jet(R), antialiased=False)
-    ax2.set_xlabel("$x$")
-    ax2.set_ylabel("$y$")
-    ax2.set_zlabel("$z$")
-    plt.show()
+    SolvePlotSymmetric()
