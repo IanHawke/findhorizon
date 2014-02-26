@@ -2,12 +2,14 @@ import numpy as np
 from scipy.integrate import ode
 from scipy.optimize import brentq, minimize, root
 
+
 class spacetime:
+
     """
     Define an axisymmetric spacetime.
     """
 
-    def __init__(self, z_positions, masses, reflection_symmetric = True):
+    def __init__(self, z_positions, masses, reflection_symmetric=True):
         """
         Initialize the spacetime given the location and masses of the
         singularities.
@@ -23,6 +25,7 @@ class spacetime:
 
 
 class trappedsurface:
+
     """
     Store any trapped surface, centred on a particular point.
     """
@@ -49,7 +52,7 @@ class trappedsurface:
         y = np.array([h * np.sin(theta), h * np.cos(theta)])
         distance_i = np.zeros_like(z_i)
         for i in range(len(z_i)):
-            distance_i[i] = np.linalg.norm(y - \
+            distance_i[i] = np.linalg.norm(y -
                                            np.array([0, z_i[i]]), 2)
 
         C = 1.0 / np.sqrt(1.0 + (dhdtheta / h) ** 2)
@@ -77,7 +80,7 @@ class trappedsurface:
 
         return dHdtheta
 
-    def find_r0(self, input_guess, full_horizon = False):
+    def find_r0(self, input_guess, full_horizon=False):
         """
         Given some initial guess, find the correct starting location
         for the trapped surface using shooting.
@@ -105,7 +108,7 @@ class trappedsurface:
             solver2.integrate(np.pi / 2.0)
 
             return solver1.y - solver2.y
-                                   
+
         # Define the shooting function if symmetric (0 <= theta <= pi/2)
         def shooting_function(r0):
             """
@@ -125,21 +128,21 @@ class trappedsurface:
         # Now find the horizon given the input guess
         self.r0 = []
         if (full_horizon or not self.spacetime.reflection_symmetric):
-            sol = root(shooting_function_full, input_guess, tol = 1.e-12)
+            sol = root(shooting_function_full, input_guess, tol=1.e-12)
             self.r0 = sol.x
         else:
-            sol = brentq(shooting_function, input_guess[0], \
-                             input_guess[1])
+            sol = brentq(shooting_function, input_guess[0],
+                         input_guess[1])
             self.r0 = [sol]
 
-    def solve_given_r0(self, full_horizon = False):
+    def solve_given_r0(self, full_horizon=False):
         """
         Given the correct value for the initial radius, find the horizon.
         """
 
         dtheta = np.pi / 100.0
 
-        if (full_horizon or not self.spacetime.reflection_symmetric): 
+        if (full_horizon or not self.spacetime.reflection_symmetric):
             # The solution needs computing for 0 <= theta <= pi
             # First half of the horizon
             theta1 = []
@@ -169,10 +172,10 @@ class trappedsurface:
                 theta2.append(solver2.t)
 
             H = np.vstack((np.array(H1), np.flipud(np.array(H2))))
-            theta = np.hstack((np.array(theta1), \
-                                        np.flipud(np.array(theta2))))
-                                   
-        else: # The solution needs computing for 0 <= theta <= pi / 2
+            theta = np.hstack((np.array(theta1),
+                               np.flipud(np.array(theta2))))
+
+        else:  # The solution needs computing for 0 <= theta <= pi / 2
             theta1 = []
             H1 = []
             H0 = np.array([self.r0[0], 0.0])
@@ -181,16 +184,16 @@ class trappedsurface:
             solver1.set_initial_value(H0, 0.0)
             theta1.append(0.0)
             H1.append(H0)
-            while solver1.successful() and solver1.t < np.pi / 2.0:        
+            while solver1.successful() and solver1.t < np.pi / 2.0:
                 solver1.integrate(solver1.t + dtheta)
                 H1.append(solver1.y)
                 theta1.append(solver1.t)
-            
-            H = np.vstack((np.array(H1), np.flipud(H1)))
-            theta = np.hstack((theta1, \
-                                   np.flipud(np.pi - np.array(theta1))))
 
-        # We now have the solution for 0 <= theta <= pi; 
+            H = np.vstack((np.array(H1), np.flipud(H1)))
+            theta = np.hstack((theta1,
+                               np.flipud(np.pi - np.array(theta1))))
+
+        # We now have the solution for 0 <= theta <= pi;
         # fill the remaining angles
         self.H = np.vstack((H, np.flipud(H)))
         self.theta = np.hstack((theta, theta + np.pi))
@@ -202,11 +205,11 @@ class trappedsurface:
         When the solution is known in r, theta coordinates, compute
         the locations in cartesian coordinates (2 and 3d).
         """
-        
+
         self.x = self.H[:, 0] * np.sin(self.theta)
         self.z = self.z_centre + self.H[:, 0] * np.cos(self.theta)
 
-        phi = np.linspace(0.0, 2.0*np.pi, 20)
+        phi = np.linspace(0.0, 2.0 * np.pi, 20)
         self.X = np.zeros((len(self.theta), len(phi)))
         self.Y = np.zeros_like(self.X)
         self.Z = np.zeros_like(self.X)
@@ -217,9 +220,10 @@ class trappedsurface:
                 self.Y[t, p] = self.H[t, 0] * np.sin(self.theta[t]) * \
                     np.sin(phi[p])
                 self.Z[t, p] = self.H[t, 0] * np.cos(self.theta[t])
-        self.R = np.sqrt(self.X**2 + self.Y**2 + self.Z**2)
+        self.R = np.sqrt(self.X ** 2 + self.Y ** 2 + self.Z ** 2)
 
         return None
+
 
 def expansion(theta, H, params):
     """
@@ -476,6 +480,7 @@ def PlotHorizon3d(ax, theta, H):
     ax.set_ylabel("$y$")
     ax.set_zlabel("$z$")
 
+
 def PlotHorizonInteractive3d(ax, theta, H):
     """
     Given all theta and H values, plot the full 3d picture.
@@ -492,10 +497,11 @@ def PlotHorizonInteractive3d(ax, theta, H):
             Z[t, p] = H[t, 0] * np.cos(theta[t])
     R = np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
     s = mlab.mesh(X, Y, Z,
-                  opacity = 0.4)
+                  opacity=0.4)
     mlab.axes()
     mlab.outline()
     mlab.show()
+
 
 def PlotHorizonSymmetric(theta, H, z=0.5, mass=1.0, elev=None, azim=None):
     """
@@ -528,16 +534,17 @@ def SolvePlotSymmetric(z=0.5, mass=1.0, elev=None, azim=None):
     theta, H = FindHorizonBinarySymmetric(z, mass)
     PlotHorizonSymmetric(theta, H, z, mass, elev, azim)
 
-def SolvePlotASymmetric(z = [-0.5, 0.5], mass = [1.0, 1.0], 
-                        elev = None, azim = None):
+
+def SolvePlotASymmetric(z=[-0.5, 0.5], mass=[1.0, 1.0],
+                        elev=None, azim=None):
     """
     Calculate and plot the results even in the full case.
     """
-    
+
     singularities = {"masses": np.array(mass),
                      "z_positions": np.array(z)}
-    r0_empirical = np.sum(mass) * (0.97 + 0.2 * np.max(np.abs(z)) + 
-                                   0.27 * np.max(np.abs(z))**2)
+    r0_empirical = np.sum(mass) * (0.97 + 0.2 * np.max(np.abs(z)) +
+                                   0.27 * np.max(np.abs(z)) ** 2)
     input_guess = [r0_empirical, r0_empirical]
     theta, H = FindHorizonFull(input_guess, singularities)
     all_theta = np.hstack((theta, theta + np.pi))
