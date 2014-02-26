@@ -96,15 +96,13 @@ class trappedsurface:
             solver1 = ode(self.expansion)
             solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver1.set_initial_value(H0, 0.0)
-            while solver1.successful() and solver1.t < np.pi / 2.0:        
-                solver1.integrate(solver1.t + dtheta)
+            solver1.integrate(np.pi / 2.0)
             # Second half of the horizon
             H0 = np.array([r0[1], 0.0])
             solver2 = ode(self.expansion)
             solver2.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver2.set_initial_value(H0, np.pi)
-            while solver2.successful() and solver2.t >= np.pi / 2.0 + 1e-12:
-                solver2.integrate(solver2.t - dtheta)
+            solver2.integrate(np.pi / 2.0)
 
             return solver1.y - solver2.y
                                    
@@ -120,8 +118,7 @@ class trappedsurface:
             solver1 = ode(self.expansion)
             solver1.set_integrator("dopri5", atol=1.e-8, rtol=1.e-6)
             solver1.set_initial_value(H0, 0.0)
-            while solver1.successful() and solver1.t < np.pi / 2.0:        
-                solver1.integrate(solver1.t + dtheta)
+            solver1.integrate(np.pi / 2.0)
 
             return solver1.y[1]
 
