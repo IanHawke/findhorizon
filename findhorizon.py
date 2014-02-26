@@ -1,15 +1,76 @@
+"""
+Find Black Hole apparent horizons in an axisymmetric spacetime.
+
+Black holes are usually described by their *horizon* enclosing the singularity.
+Locating any horizon in a general (typically numerically generated) spacetime
+can be very hard - see Thornburg's review [1]_ for details. Here we restrict to
+the simpler problem of a specific type of axisymmetric spacetime, where the
+equation to solve reduces to a boundary value problem.
+
+Strictly this module constructs *trapped surfaces*, which are surfaces where
+null geodesics (light rays) are ingoing. The apparent horizon is the 
+outermost trapped surface.
+
+Notes
+-----
+
+The technical restrictions on the spacetime are
+
+1. axisymmetric, so the singularities are on the z axis;
+2. singularities have Brill-Lindquist type;
+3. spacetime is conformally flat;
+4. coordinates are chosen to obey maximal slicing with no shift;
+5. data is time symmetric.
+
+References
+----------
+
+.. [1] J. Thornburg, "Event and Apparent Horizon Finders for 3+1 Numerical
+    Relativity", Living Reviews in Relativity 10 (3) 2007.
+    http://dx.doi.org/10.12942/lrr-2007-3.
+"""
 import numpy as np
 from scipy.integrate import ode
-from scipy.optimize import brentq, minimize, root
+from scipy.optimize import brentq, root
 
 
 class spacetime:
-
     """
     Define an axisymmetric spacetime.
+
+    For an axisymmetric, vacuum spacetime with Brill-Lindquist singularities
+    the only parameters that matter is the locations of the singularities
+    (i.e. their z-location) and their bare masses. 
+
+    Parameters
+    ----------
+
+    z_positions : list of float
+        The location of the singularities on the z-axis.
+    masses : list of float
+        The bare masses of the singularities.
+    reflection_symmetry : bool, optional
+        Is the spacetime symmetric across the x-axis.
+
+    See also
+    --------
+
+    trappedsurface : class defining the trapped surfaces on a spacetime.
+
+    Examples
+    --------
+
+    >>> schwarzschild = spacetime([0.0], [1.0], True)
+
+    This defines standard Schwarzschild spacetime with unit mass.
+
+    >>> binary = spacetime([-0.75, 0.75], [1.0, 1.1])
+
+    This defines two black holes, with the locations mirrored but different
+    masses.
     """
 
-    def __init__(self, z_positions, masses, reflection_symmetric=True):
+    def __init__(self, z_positions, masses, reflection_symmetric=False):
         """
         Initialize the spacetime given the location and masses of the
         singularities.
@@ -25,12 +86,68 @@ class spacetime:
 
 
 class trappedsurface:
-
-    """
+    r"""
     Store any trapped surface, centred on a particular point.
+
+    The trapped surface is defined in polar coordinates centred on a point
+    on the z-axis; the z-axis is :math:`\theta` = 0 or :math:`\theta` = 
+    :math:`\pi`.
+    
+    Parameters
+    ----------
+
+    spacetime : spacetime
+        The spacetime on which the trapped surface lives.
+    z_centre : float
+        The z-coordinate about which the polar coordinate system describing
+        the trapped surface is defined.
+
+    See also
+    --------
+
+    spacetime : class defining the spacetime.
+
+    Notes
+    -----
+
+    With the restricted spacetime considered here, a trapped surface
+    :math:`h(\theta)` satisfies a boundary value problem with the 
+    boundary conditions :math:`h'(\theta = 0) = 0 = h'(\theta = \pi)`. 
+    If the spacetime is reflection symmetric about the x-axis then the
+    boundary condition :math:`h'(\theta = \pi / 2) = 0` can be used
+    and the domain restricted to :math:`0 \le \theta \le \pi / 2`.
+
+    The shooting method is used here. In the reflection symmetric case
+    the algorithm needs a guess for the initial horizon radius,
+    :math:`h(\theta = 0)`, and a single condition is enforced at
+    :math:`\pi / 2` to match to the boundary condition there. 
+
+    In the general case we guess the horizon radius at two points,
+    :math:`h(\theta = 0)` and :math:`h(\theta = \pi)` and continuity
+    of both :math:`h` *and* :math:`h'` are enforced at the matching point
+    :math:`\pi / 2`. The reason for this is a weak coordinate singularity
+    on the axis at :math:`\theta = 0, \pi` which makes it difficult to
+    integrate *to* these points, but possible to integrate *away* from them.
+
+    Examples
+    --------
+
+    >>> schwarzschild = spacetime([0.0], [1.0], True)
+    >>> ts1 = trappedsurface(schwarzschild)
+    >>> ts1.find_r0([0.49, 0.51])
+    >>> ts1.solve_given_r0()
+    >>> ts1.convert_to_cartesian()
+    >>> plt.plot(ts1.x, ts1.z)
+    >>> plt.show()
+
+    This example first constructs the Schwarzschild spacetime which, in this
+    coordinate system, has the horizon with radius 0.5. The trapped surface
+    is set up, the location of the trapped surface at :math:`\theta = 0` is 
+    found, then the complete surface constructed first in polar coordinates,
+    then in cartesians. Finally the horizon is plotted in the x-z plane.
     """
 
-    def __init__(self, z_centre, spacetime):
+    def __init__(self, spacetime, z_centre = 0.0):
         """
         Initialize a horizon centred on a particular point.
         """
@@ -41,6 +158,17 @@ class trappedsurface:
     def expansion(self, theta, H):
         """
         Compute the expansion for the given spacetime at a fixed point.
+
+        This function gives the differential equation defining the
+        boundary value problem.
+
+        Parameters
+        ----------
+
+        theta : float
+            The angular location at this point.
+        H : list of float
+            A vector of :math:`(h, h')`.
         """
 
         h = H[0]
@@ -81,18 +209,62 @@ class trappedsurface:
         return dHdtheta
 
     def find_r0(self, input_guess, full_horizon=False):
-        """
+        r"""
         Given some initial guess, find the correct starting location
         for the trapped surface using shooting.
+
+        This finds the horizon radius at :math:`\theta = 0` which,
+        together with the differential equation, specifies the trapped
+        surface location.
+
+        Parameters
+        ----------
+
+        input_guess : list of float
+            Two positive reals defining the guess for the initial radius.
+
+            Note that the meaning is different depending on whether this
+            is a "full" horizon or not. For a full horizon the numbers
+            correspond to the guesses at :math:`\theta = 0, \pi` 
+            respectively. In the symmetric case where only one guess is
+            needed the vector defines the interval within which a *unique*
+            root must lie.
+
+        full_horizon : bool, optional
+            If the general algorithm is needed (ie, the domain should be
+            :math:`0 \le \theta \le \pi` instead of 
+            :math:`0 \le \theta \le \pi / 2`).
+
+            This parameter is independent of the symmetry of the spacetime. 
+            If the spacetime is not symmetric this parameter will be 
+            ignored and the general algorithm always used. If the spacetime
+            is symmetric it may still be necessary to use the general 
+            algorithm: for example, for two singularities it is possible to
+            find a trapped surface surrounding just one singularity.
         """
 
         # Define the shooting function if using matching (0 <= theta <= pi)
         def shooting_function_full(r0):
-            """
+            r"""
             The function used in the shooting algorithm.
-            Returns the error at the matching point.
+
+            This is the full algorithm from integrating over
+            :math:`0 \le \theta \le \pi`. The difference between the 
+            solution and its derivative at the matching point is the
+            error to be minimized.
+
+            Parameters
+            ----------
+
+            r0 : list of float
+                Initial guess for the horizon radius, as outlined above.
+
+            Returns
+            -------
+            
+            list of float
+                The error at the matching point.
             """
-            dtheta = np.pi / 100.0
 
             # First half of the horizon
             H0 = np.array([r0[0], 0.0])
@@ -111,11 +283,26 @@ class trappedsurface:
 
         # Define the shooting function if symmetric (0 <= theta <= pi/2)
         def shooting_function(r0):
-            """
+            r"""
             The function used in the shooting algorithm.
-            Returns the error at the end point.
+
+            This is the symmetric algorithm from integrating over
+            :math:`0 \le \theta \le \pi / 2`. The difference between the 
+            derivative at the end point and the boundary condition is the
+            error to be minimized.
+
+            Parameters
+            ----------
+
+            r0 : float
+                Initial guess for the horizon radius, as outlined above.
+
+            Returns
+            -------
+            
+            float
+                The error at the end point.
             """
-            dtheta = np.pi / 100.0
 
             H0 = np.array([r0, 0.0])
             solver1 = ode(self.expansion)
@@ -136,8 +323,32 @@ class trappedsurface:
             self.r0 = [sol]
 
     def solve_given_r0(self, full_horizon=False):
-        """
+        r"""
         Given the correct value for the initial radius, find the horizon.
+
+        This function does not find the correct radius for the trapped
+        surface, but solves (in polar coordinates) for the complete
+        surface location given the correct initial guess.
+
+        Parameters
+        ----------
+
+        full_horizon : bool, optional
+            If the general algorithm is needed (ie, the domain should be
+            :math:`0 \le \theta \le \pi` instead of 
+            :math:`0 \le \theta \le \pi / 2`).
+
+            This parameter is independent of the symmetry of the spacetime. 
+            If the spacetime is not symmetric this parameter will be 
+            ignored and the general algorithm always used. If the spacetime
+            is symmetric it may still be necessary to use the general 
+            algorithm: for example, for two singularities it is possible to
+            find a trapped surface surrounding just one singularity.
+
+        See also
+        --------
+
+        find_r0 : finds the correct initial radius.
         """
 
         dtheta = np.pi / 100.0
@@ -204,6 +415,15 @@ class trappedsurface:
         """
         When the solution is known in r, theta coordinates, compute
         the locations in cartesian coordinates (2 and 3d).
+
+        This function assumes that the trapped surface has been 
+        located and solved for.
+
+        See also
+        --------
+
+        solve_given_r0 : find the trapped surface location in polar 
+                         coordinates.
         """
 
         self.x = self.H[:, 0] * np.sin(self.theta)
@@ -330,7 +550,7 @@ def shooting_function_full(h0, singularities,
 def FindHorizonFull(input_guess, singularities, options=None):
     """
     Find horizons given N singularities (positions and locations),
-    assuming 
+    assuming
     1) conformal flatness
     2) axisymmetry
     The input_guess is the radius on the axis.
@@ -386,7 +606,7 @@ def FindHorizonFull(input_guess, singularities, options=None):
 def FindHorizonSymmetric(input_guess, singularities, options=None):
     """
     Find horizons given N singularities (positions and locations),
-    assuming 
+    assuming
     1) conformal flatness
     2) axisymmetry
     The input_guess is the radius on the axis at both ends.
@@ -473,9 +693,9 @@ def PlotHorizon3d(ax, theta, H):
             Y[t, p] = H[t, 0] * np.sin(theta[t]) * np.sin(phi[p])
             Z[t, p] = H[t, 0] * np.cos(theta[t])
     R = np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
-    surf = ax.plot_surface(X, Y, Z,
-                           rstride=1, cstride=1, linewidth=0,
-                           facecolors=cm.jet(R), antialiased=False)
+    ax.plot_surface(X, Y, Z,
+                    rstride=1, cstride=1, linewidth=0,
+                    facecolors=cm.jet(R), antialiased=False)
     ax.set_xlabel("$x$")
     ax.set_ylabel("$y$")
     ax.set_zlabel("$z$")
@@ -495,9 +715,8 @@ def PlotHorizonInteractive3d(ax, theta, H):
             X[t, p] = H[t, 0] * np.sin(theta[t]) * np.cos(phi[p])
             Y[t, p] = H[t, 0] * np.sin(theta[t]) * np.sin(phi[p])
             Z[t, p] = H[t, 0] * np.cos(theta[t])
-    R = np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
-    s = mlab.mesh(X, Y, Z,
-                  opacity=0.4)
+    #R = np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
+    mlab.mesh(X, Y, Z, opacity=0.4)
     mlab.axes()
     mlab.outline()
     mlab.show()
@@ -505,11 +724,11 @@ def PlotHorizonInteractive3d(ax, theta, H):
 
 def PlotHorizonSymmetric(theta, H, z=0.5, mass=1.0, elev=None, azim=None):
     """
-    Take the output for a symmetric horizon 
+    Take the output for a symmetric horizon
     (ie, theta \in [0, pi/2]) and plot it using 2 and 3d figures.
     """
     import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
+    #from mpl_toolkits.mplot3d import Axes3D
     fig = plt.figure(figsize=(12, 8))
     ax1 = fig.add_subplot(121)
     half_theta = np.hstack((theta, np.flipud(np.pi - theta)))
@@ -550,7 +769,7 @@ def SolvePlotASymmetric(z=[-0.5, 0.5], mass=[1.0, 1.0],
     all_theta = np.hstack((theta, theta + np.pi))
     all_H = np.vstack((H, np.flipud(H)))
     import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
+    #from mpl_toolkits.mplot3d import Axes3D
     fig = plt.figure(figsize=(12, 8))
     ax1 = fig.add_subplot(121)
     PlotHorizon2d(
