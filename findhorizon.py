@@ -9,7 +9,7 @@ the simpler problem of a specific type of axisymmetric spacetime, where the
 equation to solve reduces to a boundary value problem.
 
 Strictly this module constructs *trapped surfaces*, which are surfaces where
-null geodesics (light rays) are ingoing. The apparent horizon is the 
+null geodesics (light rays) are ingoing. The apparent horizon is the
 outermost trapped surface.
 
 Notes
@@ -42,7 +42,7 @@ class spacetime:
 
     For an axisymmetric, vacuum spacetime with Brill-Lindquist singularities
     the only parameters that matter is the locations of the singularities
-    (i.e. their z-location) and their bare masses. 
+    (i.e. their z-location) and their bare masses.
 
     Parameters
     ----------
@@ -93,7 +93,7 @@ class trappedsurface:
     Store any trapped surface, centred on a particular point.
 
     The trapped surface is defined in polar coordinates centred on a point
-    on the z-axis; the z-axis is :math:`\theta` = 0 or :math:`\theta` = 
+    on the z-axis; the z-axis is :math:`\theta` = 0 or :math:`\theta` =
     :math:`\pi`.
 
     Parameters
@@ -114,8 +114,8 @@ class trappedsurface:
     -----
 
     With the restricted spacetime considered here, a trapped surface
-    :math:`h(\theta)` satisfies a boundary value problem with the 
-    boundary conditions :math:`h'(\theta = 0) = 0 = h'(\theta = \pi)`. 
+    :math:`h(\theta)` satisfies a boundary value problem with the
+    boundary conditions :math:`h'(\theta = 0) = 0 = h'(\theta = \pi)`.
     If the spacetime is reflection symmetric about the x-axis then the
     boundary condition :math:`h'(\theta = \pi / 2) = 0` can be used
     and the domain restricted to :math:`0 \le \theta \le \pi / 2`.
@@ -123,7 +123,7 @@ class trappedsurface:
     The shooting method is used here. In the reflection symmetric case
     the algorithm needs a guess for the initial horizon radius,
     :math:`h(\theta = 0)`, and a single condition is enforced at
-    :math:`\pi / 2` to match to the boundary condition there. 
+    :math:`\pi / 2` to match to the boundary condition there.
 
     In the general case we guess the horizon radius at two points,
     :math:`h(\theta = 0)` and :math:`h(\theta = \pi)` and continuity
@@ -145,7 +145,7 @@ class trappedsurface:
 
     This example first constructs the Schwarzschild spacetime which, in this
     coordinate system, has the horizon with radius 0.5. The trapped surface
-    is set up, the location of the trapped surface at :math:`\theta = 0` is 
+    is set up, the location of the trapped surface at :math:`\theta = 0` is
     found, then the complete surface constructed first in polar coordinates,
     then in cartesians. Finally the horizon is plotted in the x-z plane.
     """
@@ -216,7 +216,7 @@ class trappedsurface:
         The function used in the shooting algorithm.
 
         This is the full algorithm from integrating over
-        :math:`0 \le \theta \le \pi`. The difference between the 
+        :math:`0 \le \theta \le \pi`. The difference between the
         solution and its derivative at the matching point is the
         error to be minimized.
 
@@ -253,7 +253,7 @@ class trappedsurface:
         The function used in the shooting algorithm.
 
         This is the symmetric algorithm from integrating over
-        :math:`0 \le \theta \le \pi / 2`. The difference between the 
+        :math:`0 \le \theta \le \pi / 2`. The difference between the
         derivative at the end point and the boundary condition is the
         error to be minimized.
 
@@ -295,20 +295,20 @@ class trappedsurface:
 
             Note that the meaning is different depending on whether this
             is a "full" horizon or not. For a full horizon the numbers
-            correspond to the guesses at :math:`\theta = 0, \pi` 
+            correspond to the guesses at :math:`\theta = 0, \pi`
             respectively. In the symmetric case where only one guess is
             needed the vector defines the interval within which a *unique*
             root must lie.
 
         full_horizon : bool, optional
             If the general algorithm is needed (ie, the domain should be
-            :math:`0 \le \theta \le \pi` instead of 
+            :math:`0 \le \theta \le \pi` instead of
             :math:`0 \le \theta \le \pi / 2`).
 
-            This parameter is independent of the symmetry of the spacetime. 
-            If the spacetime is not symmetric this parameter will be 
+            This parameter is independent of the symmetry of the spacetime.
+            If the spacetime is not symmetric this parameter will be
             ignored and the general algorithm always used. If the spacetime
-            is symmetric it may still be necessary to use the general 
+            is symmetric it may still be necessary to use the general
             algorithm: for example, for two singularities it is possible to
             find a trapped surface surrounding just one singularity.
         """
@@ -336,13 +336,13 @@ class trappedsurface:
 
         full_horizon : bool, optional
             If the general algorithm is needed (ie, the domain should be
-            :math:`0 \le \theta \le \pi` instead of 
+            :math:`0 \le \theta \le \pi` instead of
             :math:`0 \le \theta \le \pi / 2`).
 
-            This parameter is independent of the symmetry of the spacetime. 
-            If the spacetime is not symmetric this parameter will be 
+            This parameter is independent of the symmetry of the spacetime.
+            If the spacetime is not symmetric this parameter will be
             ignored and the general algorithm always used. If the spacetime
-            is symmetric it may still be necessary to use the general 
+            is symmetric it may still be necessary to use the general
             algorithm: for example, for two singularities it is possible to
             find a trapped surface surrounding just one singularity.
 
@@ -417,13 +417,13 @@ class trappedsurface:
         When the solution is known in r, theta coordinates, compute
         the locations in cartesian coordinates (2 and 3d).
 
-        This function assumes that the trapped surface has been 
-        located and solved for.
+        This function assumes that the trapped surface has been located and
+        solved for.
 
         See also
         --------
 
-        solve_given_r0 : find the trapped surface location in polar 
+        solve_given_r0 : find the trapped surface location in polar
                          coordinates.
         """
 
