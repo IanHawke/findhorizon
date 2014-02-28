@@ -32,7 +32,7 @@ References
 """
 import numpy as np
 from scipy.integrate import ode
-from scipy.optimize import brentq, root
+from scipy.optimize import brentq, root, newton
 
 
 class spacetime:
@@ -319,8 +319,9 @@ class trappedsurface:
             sol = root(self.shooting_function_full, input_guess, tol=1.e-12)
             self.r0 = sol.x
         else:
-            sol = brentq(self.shooting_function, input_guess[0],
-                         input_guess[1])
+#            sol = brentq(self.shooting_function, input_guess[0],
+#                         input_guess[1])
+            sol = newton(self.shooting_function, input_guess[1])
             self.r0 = [sol]
 
     def solve_given_r0(self, full_horizon=False):
@@ -525,46 +526,93 @@ def FindHorizonBinarySymmetric(z=0.5, mass=1.0):
     ts.convert_to_cartesian()
     return ts
 
+def FindInnerOuterHorizonBinarySymmetric(z=0.5, mass=1.0):
+    r"""
+    Utility function to find horizons for reflection symmetric case.
 
-def PlotHorizon3d(ax, theta, H):
-    """
-    Given all theta and H values, plot the full 3d picture.
-    """
-    from matplotlib import cm
-    phi = np.linspace(0.0, 2.0 * np.pi, 20)
-    X = np.zeros((len(theta), len(phi)))
-    Y = np.zeros_like(X)
-    Z = np.zeros_like(X)
-    for t in range(len(theta)):
-        for p in range(len(phi)):
-            X[t, p] = H[t, 0] * np.sin(theta[t]) * np.cos(phi[p])
-            Y[t, p] = H[t, 0] * np.sin(theta[t]) * np.sin(phi[p])
-            Z[t, p] = H[t, 0] * np.cos(theta[t])
-    R = np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
-    ax.plot_surface(X, Y, Z,
-                    rstride=1, cstride=1, linewidth=0,
-                    facecolors=cm.jet(R), antialiased=False)
-    ax.set_xlabel("$x$")
-    ax.set_ylabel("$y$")
-    ax.set_zlabel("$z$")
+    This returns two trapped surface for a spacetime with precisely 
+    two singularities of identical mass located at :math:`\pm z`. The outer
+    surface is the apparent horizon; the inner surface is just a trapped 
+    surface. 
 
+    Notes
+    -----
 
-def PlotHorizonInteractive3d(ax, theta, H):
+    The initial guess for the horizon location is based on fitting a cubic
+    to the results constructed for :math:`0 \le z \le 0.75` for the unit
+    mass case. The radius should scale with the mass. For larger separations
+    we should not expect a common horizon. The inner horizon is based on
+    a similar fit but in the narrower range :math:`0.6 \le z \le 0.7` and
+    so it is very likely that this function will fail for :math:`z < 0.42`.
+
+    Parameters
+    ----------
+
+    z : float, optional
+        The distance from the origin of the singularities (ie the two
+        singularities are located at [-z, +z]).
+    mass : float, optional
+        The mass of the singularities.
+
+    Returns
+    -------
+
+    ts1, ts2 : trappedsurface
+        Returns the trapped surfaces found.
     """
-    Given all theta and H values, plot the full 3d picture.
+
+    st = spacetime([-z, z], [mass, mass], True)
+    ts1 = trappedsurface(st, 0.0)
+    ts2 = trappedsurface(st, 0.0)
+    # An empirical formula for the required initial guess
+    # (ie the value of r0, or h, at theta = 0)
+    r0_empirical = mass * (1.0 - 0.0383 * z + 0.945 * z ** 2 - 0.522 * z ** 3)
+    initial_guess = [0.99 * r0_empirical, 1.01 * r0_empirical]
+    try:
+        ts1.find_r0(initial_guess)
+    except ValueError:
+        r0 = np.linspace(0.95 * r0_empirical, 1.05 * r0_empirical)
+        phi = np.zeros_like(r0)
+        for i in range(len(r0)):
+            phi[i] = ts.shooting_function(r0[i])
+        initial_guess = [r0[np.argmin(phi)], r0[-1]]
+        ts1.find_r0(initial_guess)
+    ts1.solve_given_r0()
+    ts1.convert_to_cartesian()
+    # This empirical formula works for the inner horizon if
+    # 0.42 < z < 0.765 or so. It looks likely that the inner horizon
+    # persists below 0.42, but eventually it will fail.
+    # r0_empirical = mass * (-0.357+4.39*z-5.263*z**2+2.953*z**3)
+    r0_empirical = mass * (1.866-10.213*z+30.744*z**2-36.513*z**3+16.21*z**4)
+    initial_guess = [0.99 * r0_empirical, 1.01 * r0_empirical]
+    try:
+        ts2.find_r0(initial_guess)
+    except ValueError:
+        r0 = np.linspace(0.95 * r0_empirical, 1.05 * r0_empirical)
+        phi = np.zeros_like(r0)
+        for i in range(len(r0)):
+            phi[i] = ts.shooting_function(r0[i])
+        initial_guess = [r0[np.argmin(phi)], r0[-1]]
+        ts2.find_r0(initial_guess)
+    ts2.solve_given_r0()
+    ts2.convert_to_cartesian()
+    return ts1, ts2
+
+def PlotHorizon3d(tss):
+    """
+    Plot a list of horizons.
+
+    Parameters
+    ----------
+
+    tss : list of trappedsurface
+        All the trapped surfaces to visualize.
     """
     from mayavi import mlab
-    phi = np.linspace(0.0, 2.0 * np.pi, 20)
-    X = np.zeros((len(theta), len(phi)))
-    Y = np.zeros_like(X)
-    Z = np.zeros_like(X)
-    for t in range(len(theta)):
-        for p in range(len(phi)):
-            X[t, p] = H[t, 0] * np.sin(theta[t]) * np.cos(phi[p])
-            Y[t, p] = H[t, 0] * np.sin(theta[t]) * np.sin(phi[p])
-            Z[t, p] = H[t, 0] * np.cos(theta[t])
-    #R = np.sqrt(X ** 2 + Y ** 2 + Z ** 2)
-    mlab.mesh(X, Y, Z, opacity=0.4)
+    cmaps = ['bone', 'jet', 'hot', 'cool', 'spring', 'summer', 'winter']
+    assert len(cmaps) > len(tss)
+    for ts, cm in zip(tss, cmaps):
+        mlab.mesh(ts.X, ts.Y, ts.Z, colormap = cm, opacity=0.4)
     mlab.axes()
     mlab.outline()
     mlab.show()
