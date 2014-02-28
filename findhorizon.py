@@ -441,7 +441,8 @@ class trappedsurface:
                     np.cos(phi[p])
                 self.Y[t, p] = self.H[t, 0] * np.sin(self.theta[t]) * \
                     np.sin(phi[p])
-                self.Z[t, p] = self.H[t, 0] * np.cos(self.theta[t])
+                self.Z[t, p] = self.z_centre + \
+                    self.H[t, 0] * np.cos(self.theta[t])
         self.R = np.sqrt(self.X ** 2 + self.Y ** 2 + self.Z ** 2)
 
         return None
@@ -594,6 +595,55 @@ def FindInnerOuterHorizonBinarySymmetric(z=0.5, mass=1.0):
             phi[i] = ts.shooting_function(r0[i])
         initial_guess = [r0[np.argmin(phi)], r0[-1]]
         ts2.find_r0(initial_guess)
+    ts2.solve_given_r0()
+    ts2.convert_to_cartesian()
+    return ts1, ts2
+
+def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
+    r"""
+    Utility function to find horizons for reflection symmetric case.
+
+    This returns two trapped surface for a spacetime with precisely 
+    two singularities of identical mass located at :math:`\pm z`. These
+    should be trapped surfaces about only one singularity.
+
+    Notes
+    -----
+
+    The initial guess for the horizon location is based on fitting a cubic
+    to the results constructed for :math:`0.45 \le z \le 0.75` for the unit
+    mass case. The radius should scale with the mass. For smaller separations
+    we should not expect individual horizons.
+
+    Parameters
+    ----------
+
+    z : float, optional
+        The distance from the origin of the singularities (ie the two
+        singularities are located at [-z, +z]).
+    mass : float, optional
+        The mass of the singularities.
+
+    Returns
+    -------
+
+    ts1, ts2 : trappedsurface
+        Returns the trapped surfaces found.
+    """
+
+    st = spacetime([-z, z], [mass, mass], True)
+    ts1 = trappedsurface(st, -z)
+    ts2 = trappedsurface(st,  z)
+    # An empirical formula for the required initial guess
+    # (ie the value of r0, or h, at theta = 0)
+    r0_close = mass * (0.002+1.027*z-1.235*z**2+0.816*z**3-0.228*z**4)
+    r0_far = mass * (0.215+0.557*z-0.727*z**2+0.531*z**3-0.163*z**4)
+    initial_guess = [r0_far, r0_close]
+    ts1.find_r0(initial_guess, True)
+    ts1.solve_given_r0()
+    ts1.convert_to_cartesian()
+    initial_guess = [r0_close, r0_far]
+    ts2.find_r0(initial_guess, True)
     ts2.solve_given_r0()
     ts2.convert_to_cartesian()
     return ts1, ts2
