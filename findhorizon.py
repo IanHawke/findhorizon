@@ -315,7 +315,9 @@ class trappedsurface:
 
         # Now find the horizon given the input guess
         self.r0 = []
-        if (full_horizon or not self.spacetime.reflection_symmetric):
+        if (full_horizon or 
+            not self.spacetime.reflection_symmetric or
+            abs(self.z_centre) > 1.e-15):
             sol = root(self.shooting_function_full, input_guess, tol=1.e-12)
             self.r0 = sol.x
         else:
@@ -638,11 +640,11 @@ def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
     # (ie the value of r0, or h, at theta = 0)
     r0_close = mass * (0.002+1.027*z-1.235*z**2+0.816*z**3-0.228*z**4)
     r0_far = mass * (0.215+0.557*z-0.727*z**2+0.531*z**3-0.163*z**4)
-    initial_guess = [r0_far, r0_close]
+    initial_guess = [r0_close, r0_far]
     ts1.find_r0(initial_guess, True)
     ts1.solve_given_r0()
     ts1.convert_to_cartesian()
-    initial_guess = [r0_close, r0_far]
+    initial_guess = [r0_far, r0_close]
     ts2.find_r0(initial_guess, True)
     ts2.solve_given_r0()
     ts2.convert_to_cartesian()
@@ -661,10 +663,17 @@ def PlotHorizon3d(tss):
     from mayavi import mlab
     cmaps = ['bone', 'jet', 'hot', 'cool', 'spring', 'summer', 'winter']
     assert len(cmaps) > len(tss)
+    extents = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     for ts, cm in zip(tss, cmaps):
         mlab.mesh(ts.X, ts.Y, ts.Z, colormap = cm, opacity=0.4)
-    mlab.axes()
-    mlab.outline()
+        extents[0] = min(extents[0], np.min(ts.X))
+        extents[1] = max(extents[1], np.max(ts.X))
+        extents[2] = min(extents[2], np.min(ts.Y))
+        extents[3] = max(extents[3], np.max(ts.Y))
+        extents[4] = min(extents[4], np.min(ts.Z))
+        extents[5] = max(extents[5], np.max(ts.Z))
+    mlab.axes(extent=extents)
+    mlab.outline(extent=extents)
     mlab.show()
 
 
