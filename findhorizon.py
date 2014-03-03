@@ -315,7 +315,7 @@ class trappedsurface:
 
         # Now find the horizon given the input guess
         self.r0 = []
-        if (full_horizon or 
+        if (full_horizon or
             not self.spacetime.reflection_symmetric or
             abs(self.z_centre) > 1.e-15):
             sol = root(self.shooting_function_full, input_guess, tol=1.e-12)
@@ -529,14 +529,15 @@ def FindHorizonBinarySymmetric(z=0.5, mass=1.0):
     ts.convert_to_cartesian()
     return ts
 
+
 def FindInnerOuterHorizonBinarySymmetric(z=0.5, mass=1.0):
     r"""
     Utility function to find horizons for reflection symmetric case.
 
-    This returns two trapped surface for a spacetime with precisely 
+    This returns two trapped surface for a spacetime with precisely
     two singularities of identical mass located at :math:`\pm z`. The outer
-    surface is the apparent horizon; the inner surface is just a trapped 
-    surface. 
+    surface is the apparent horizon; the inner surface is just a trapped
+    surface.
 
     Notes
     -----
@@ -601,11 +602,12 @@ def FindInnerOuterHorizonBinarySymmetric(z=0.5, mass=1.0):
     ts2.convert_to_cartesian()
     return ts1, ts2
 
+
 def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
     r"""
     Utility function to find horizons for reflection symmetric case.
 
-    This returns two trapped surface for a spacetime with precisely 
+    This returns two trapped surface for a spacetime with precisely
     two singularities of identical mass located at :math:`\pm z`. These
     should be trapped surfaces about only one singularity.
 
@@ -650,6 +652,7 @@ def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
     ts2.convert_to_cartesian()
     return ts1, ts2
 
+
 def PlotHorizon3d(tss):
     """
     Plot a list of horizons.
@@ -665,7 +668,7 @@ def PlotHorizon3d(tss):
     assert len(cmaps) > len(tss)
     extents = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     for ts, cm in zip(tss, cmaps):
-        mlab.mesh(ts.X, ts.Y, ts.Z, colormap = cm, opacity=0.4)
+        mlab.mesh(ts.X, ts.Y, ts.Z, colormap=cm, opacity=0.4)
         extents[0] = min(extents[0], np.min(ts.X))
         extents[1] = max(extents[1], np.max(ts.X))
         extents[2] = min(extents[2], np.min(ts.Y))
