@@ -31,6 +31,7 @@ References
     http://dx.doi.org/10.12942/lrr-2007-3.
 """
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.integrate import ode
 from scipy.optimize import brentq, root, newton
 
@@ -681,6 +682,39 @@ def PlotHorizon3d(tss):
     mlab.outline(extent=extents)
     mlab.show()
 
+
+def SolvePlotSymmetric(z=0.5, mass=1.0):
+    r"""
+    Utility function to find horizons for reflection symmetric case.
+
+    This returns the horizon for a spacetime with precisely two singularities
+    of identical mass located at :math:`\pm z`.
+
+    Notes
+    -----
+
+    The initial guess for the horizon location is based on fitting a cubic
+    to the results constructed for :math:`0 \le z \le 0.75` for the unit
+    mass case. The radius should scale with the mass. For larger separations
+    we should not expect a common horizon.
+
+    Parameters
+    ----------
+
+    z : float, optional
+        The distance from the origin of the singularities (ie the two
+        singularities are located at [-z, +z]).
+    mass : float, optional
+        The mass of the singularities.
+    """
+
+    ts = FindHorizonBinarySymmetric(z, mass)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ts.plot_2d(ax)
+    plt.show()
+
+    return fig
 
 if __name__ == "__main__":
     # SolvePlotSymmetric()
