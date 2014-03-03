@@ -177,34 +177,36 @@ class trappedsurface:
         h = H[0]
         dhdtheta = H[1]
 
-        z_i = self.spacetime.z_positions - self.z_centre
+        z_i = self.spacetime.z_positions
         m_i = self.spacetime.masses
 
         distance_i = np.zeros_like(z_i)
+        z0_minus_zi = np.zeros_like(z_i)
         for i in range(len(z_i)):
-            distance_i[i] = np.sqrt((h * np.sin(theta)) ** 2 +
-                                    (h * np.cos(theta) - z_i[i]) ** 2)
+            z0_minus_zi[i] = self.z_centre - z_i[i]
+            distance_i[i] = np.sqrt(h**2 + 2.0*z0_minus_zi[i]*h*np.cos(theta) 
+                                    + z0_minus_zi[i]**2)
 
-        C = 1.0 / np.sqrt(1.0 + (dhdtheta / h) ** 2)
+        C2 = 1.0 / (1.0 + (dhdtheta / h) ** 2)
         if (abs(theta) < 1e-16) or (abs(theta - np.pi) < 1e-16):
             cot_theta_dhdtheta_C2 = 0.0
         else:
-            cot_theta_dhdtheta_C2 = dhdtheta / (np.tan(theta) * C ** 2)
+            cot_theta_dhdtheta_C2 = dhdtheta / (np.tan(theta) * C2)
 
         psi = 1.0
         dpsi_dr = 0.0
         dpsi_dtheta = 0.0
         for i in range(len(m_i)):
             psi += 0.5 * m_i[i] / distance_i[i]
-            dpsi_dr += 0.5 * m_i[i] * (z_i[i] * np.cos(theta) - h) / \
+            dpsi_dr -= 0.5*m_i[i]*(h+z0_minus_zi[i]*np.cos(theta)) / \
                 distance_i[i] ** 3
-            dpsi_dtheta += 0.5 * m_i[i] * h * (-z_i[i] * np.sin(theta)) / \
+            dpsi_dtheta += 0.5*m_i[i]*h*z0_minus_zi[i]*np.sin(theta) / \
                 distance_i[i] ** 3
 
         dHdtheta = np.zeros_like(H)
         dHdtheta[0] = dhdtheta
         dHdtheta[1] = 2.0 * h - cot_theta_dhdtheta_C2 + \
-            4.0 * h ** 2 / (psi * C ** 2) * \
+            4.0 * h ** 2 / (psi * C2) * \
             (dpsi_dr - dpsi_dtheta * dhdtheta / h ** 2) + \
             3.0 * dhdtheta ** 2 / h
 
@@ -644,11 +646,11 @@ def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
     r0_far = mass * (0.215+0.557*z-0.727*z**2+0.531*z**3-0.163*z**4)
     initial_guess = [r0_close, r0_far]
     ts1.find_r0(initial_guess, True)
-    ts1.solve_given_r0()
+    ts1.solve_given_r0(True)
     ts1.convert_to_cartesian()
     initial_guess = [r0_far, r0_close]
     ts2.find_r0(initial_guess, True)
-    ts2.solve_given_r0()
+    ts2.solve_given_r0(True)
     ts2.convert_to_cartesian()
     return ts1, ts2
 
