@@ -765,6 +765,35 @@ def SolvePlotSymmetric(z=0.5, mass=1.0):
 
     return fig
 
+def SolvePlotSymmetric3d(z=0.5, mass=1.0):
+    r"""
+    Utility function to plot horizon in 3d for reflection symmetric case.
+
+    This returns the horizon for a spacetime with precisely two singularities
+    of identical mass located at :math:`\pm z`.
+
+    Notes
+    -----
+
+    The initial guess for the horizon location is based on fitting a cubic
+    to the results constructed for :math:`0 \le z \le 0.75` for the unit
+    mass case. The radius should scale with the mass. For larger separations
+    we should not expect a common horizon.
+
+    Parameters
+    ----------
+
+    z : float, optional
+        The distance from the origin of the singularities (ie the two
+        singularities are located at [-z, +z]).
+    mass : float, optional
+        The mass of the singularities.
+    """
+
+    ts = FindHorizonBinarySymmetric(z, mass)
+    PlotHorizon3d([ts])
+
+
 def SolvePlotBinary(z=0.5, mass1=1.0, mass2=1.0):
     r"""
     Utility function to find horizons for general case.
@@ -795,6 +824,33 @@ def SolvePlotBinary(z=0.5, mass1=1.0, mass2=1.0):
     plt.show()
 
     return fig
+
+def SolvePlotBinary3d(z=0.5, mass1=1.0, mass2=1.0):
+    r"""
+    Utility function to plot horizons in 3d for general case.
+
+    This returns the horizon for a spacetime with precisely two singularities
+    of different mass located at :math:`\pm z`.
+
+    Notes
+    -----
+
+    The initial guess is not easily determined, so performance is poor and
+    the algorithm not robust
+
+    Parameters
+    ----------
+
+    z : float, optional
+        The distance from the origin of the singularities (ie the two
+        singularities are located at [-z, +z]).
+    mass1, mass2 : float, optional
+        The mass of the singularities.
+    """
+
+    ts = FindHorizonBinary(z, mass1, mass2)
+    PlotHorizon3d([ts])
+
 
 if __name__ == "__main__":
     # SolvePlotSymmetric()
