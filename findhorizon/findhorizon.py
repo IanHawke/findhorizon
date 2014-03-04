@@ -656,6 +656,55 @@ def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
     return ts1, ts2
 
 
+def FindHorizonBinary(z=0.5, mass1=1.0, mass2=1.0):
+    r"""
+    Utility function to find horizons for the general case.
+
+    This returns the horizon for a spacetime with precisely two singularities
+    of mass [mass1, mass2] located at :math:`\pm z`. That is, we work in the
+    frame where the location of the horizons is symmetric.
+
+    Notes
+    -----
+
+    The initial guess for the horizon location is based on fitting a cubic
+    to the results constructed for :math:`0 \le z \le 0.75` for the unit
+    mass case. The radius should scale with the mass. For larger separations
+    we should not expect a common horizon.
+
+    Parameters
+    ----------
+
+    z : float, optional
+        The distance from the origin of the singularities (ie the two
+        singularities are located at [-z, +z]).
+    mass : float, optional
+        The mass of the singularities.
+
+    Returns
+    -------
+
+    ts : trappedsurface
+        Only returns the single surface found, expected to be the common
+        horizon.
+    """
+
+    st = spacetime([-z, z], [mass1, mass2])
+    ts = trappedsurface(st, 0.0)
+    # An empirical formula for the required initial guess
+    # (ie the value of r0, or h, at theta = 0)
+    # This really is just a guess based on the symmetric case.
+    zom = 2.0 * z / (mass1 + mass2)
+    r0_empirical = (1.0 - 0.0383*zom + 0.945*zom**2 - 0.522*zom**3) * \
+        (mass1 + mass2) / 2.0
+    r0_empirical = max(r0_empirical, z+0.5*max(mass1,mass2))
+    initial_guess = [r0_empirical, r0_empirical]
+    ts.find_r0(initial_guess, True)
+    ts.solve_given_r0()
+    ts.convert_to_cartesian()
+    return ts
+
+
 def PlotHorizon3d(tss):
     """
     Plot a list of horizons.
@@ -709,6 +758,37 @@ def SolvePlotSymmetric(z=0.5, mass=1.0):
     """
 
     ts = FindHorizonBinarySymmetric(z, mass)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ts.plot_2d(ax)
+    plt.show()
+
+    return fig
+
+def SolvePlotBinary(z=0.5, mass1=1.0, mass2=1.0):
+    r"""
+    Utility function to find horizons for general case.
+
+    This returns the horizon for a spacetime with precisely two singularities
+    of different mass located at :math:`\pm z`.
+
+    Notes
+    -----
+
+    The initial guess is not easily determined, so performance is poor and
+    the algorithm not robust
+
+    Parameters
+    ----------
+
+    z : float, optional
+        The distance from the origin of the singularities (ie the two
+        singularities are located at [-z, +z]).
+    mass1, mass2 : float, optional
+        The mass of the singularities.
+    """
+
+    ts = FindHorizonBinary(z, mass1, mass2)
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ts.plot_2d(ax)
