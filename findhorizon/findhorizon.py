@@ -185,8 +185,8 @@ class trappedsurface:
         z0_minus_zi = np.zeros_like(z_i)
         for i in range(len(z_i)):
             z0_minus_zi[i] = self.z_centre - z_i[i]
-            distance_i[i] = np.sqrt(h**2 + 2.0*z0_minus_zi[i]*h*np.cos(theta) 
-                                    + z0_minus_zi[i]**2)
+            distance_i[i] = np.sqrt(h ** 2 + 2.0 * z0_minus_zi[i] * h * np.cos(theta)
+                                    + z0_minus_zi[i] ** 2)
 
         C2 = 1.0 / (1.0 + (dhdtheta / h) ** 2)
         if (abs(theta) < 1e-16) or (abs(theta - np.pi) < 1e-16):
@@ -199,9 +199,9 @@ class trappedsurface:
         dpsi_dtheta = 0.0
         for i in range(len(m_i)):
             psi += 0.5 * m_i[i] / distance_i[i]
-            dpsi_dr -= 0.5*m_i[i]*(h+z0_minus_zi[i]*np.cos(theta)) / \
+            dpsi_dr -= 0.5 * m_i[i] * (h + z0_minus_zi[i] * np.cos(theta)) / \
                 distance_i[i] ** 3
-            dpsi_dtheta += 0.5*m_i[i]*h*z0_minus_zi[i]*np.sin(theta) / \
+            dpsi_dtheta += 0.5 * m_i[i] * h * z0_minus_zi[i] * np.sin(theta) / \
                 distance_i[i] ** 3
 
         dHdtheta = np.zeros_like(H)
@@ -319,8 +319,8 @@ class trappedsurface:
         # Now find the horizon given the input guess
         self.r0 = []
         if (full_horizon or
-            not self.spacetime.reflection_symmetric or
-            abs(self.z_centre) > 1.e-15):
+                not self.spacetime.reflection_symmetric or
+                abs(self.z_centre) > 1.e-15):
             sol = root(self.shooting_function_full, input_guess, tol=1.e-12)
             self.r0 = sol.x
         else:
@@ -590,7 +590,9 @@ def FindInnerOuterHorizonBinarySymmetric(z=0.5, mass=1.0):
     # 0.42 < z < 0.765 or so. It looks likely that the inner horizon
     # persists below 0.42, but eventually it will fail.
     # r0_empirical = mass * (-0.357+4.39*z-5.263*z**2+2.953*z**3)
-    r0_empirical = mass * (1.866-10.213*z+30.744*z**2-36.513*z**3+16.21*z**4)
+    r0_empirical = mass * \
+        (1.866 - 10.213 * z + 30.744 * z **
+         2 - 36.513 * z ** 3 + 16.21 * z ** 4)
     initial_guess = [0.99 * r0_empirical, 1.01 * r0_empirical]
     try:
         ts2.find_r0(initial_guess)
@@ -643,8 +645,10 @@ def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
     ts2 = trappedsurface(st,  z)
     # An empirical formula for the required initial guess
     # (ie the value of r0, or h, at theta = 0)
-    r0_close = mass * (0.002+1.027*z-1.235*z**2+0.816*z**3-0.228*z**4)
-    r0_far = mass * (0.215+0.557*z-0.727*z**2+0.531*z**3-0.163*z**4)
+    r0_close = mass * \
+        (0.002 + 1.027 * z - 1.235 * z ** 2 + 0.816 * z ** 3 - 0.228 * z ** 4)
+    r0_far = mass * \
+        (0.215 + 0.557 * z - 0.727 * z ** 2 + 0.531 * z ** 3 - 0.163 * z ** 4)
     initial_guess = [r0_close, r0_far]
     ts1.find_r0(initial_guess, True)
     ts1.solve_given_r0(True)
@@ -695,9 +699,9 @@ def FindHorizonBinary(z=0.5, mass1=1.0, mass2=1.0):
     # (ie the value of r0, or h, at theta = 0)
     # This really is just a guess based on the symmetric case.
     zom = 2.0 * z / (mass1 + mass2)
-    r0_empirical = (1.0 - 0.0383*zom + 0.945*zom**2 - 0.522*zom**3) * \
+    r0_empirical = (1.0 - 0.0383 * zom + 0.945 * zom ** 2 - 0.522 * zom ** 3) * \
         (mass1 + mass2) / 2.0
-    r0_empirical = max(r0_empirical, z+0.5*max(mass1,mass2))
+    r0_empirical = max(r0_empirical, z + 0.5 * max(mass1, mass2))
     initial_guess = [r0_empirical, r0_empirical]
     ts.find_r0(initial_guess, True)
     ts.solve_given_r0()
@@ -765,6 +769,7 @@ def SolvePlotSymmetric(z=0.5, mass=1.0):
 
     return fig
 
+
 def SolvePlotSymmetric3d(z=0.5, mass=1.0):
     r"""
     Utility function to plot horizon in 3d for reflection symmetric case.
@@ -824,6 +829,7 @@ def SolvePlotBinary(z=0.5, mass1=1.0, mass2=1.0):
     plt.show()
 
     return fig
+
 
 def SolvePlotBinary3d(z=0.5, mass1=1.0, mass2=1.0):
     r"""
