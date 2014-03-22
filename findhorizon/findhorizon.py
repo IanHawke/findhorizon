@@ -36,7 +36,7 @@ from scipy.integrate import ode
 from scipy.optimize import brentq, root, newton
 
 
-class spacetime:
+class Spacetime:
 
     """
     Define an axisymmetric spacetime.
@@ -58,16 +58,16 @@ class spacetime:
     See also
     --------
 
-    trappedsurface : class defining the trapped surfaces on a spacetime.
+    TrappedSurface : class defining the trapped surfaces on a spacetime.
 
     Examples
     --------
 
-    >>> schwarzschild = spacetime([0.0], [1.0], True)
+    >>> schwarzschild = Spacetime([0.0], [1.0], True)
 
     This defines standard Schwarzschild spacetime with unit mass.
 
-    >>> binary = spacetime([-0.75, 0.75], [1.0, 1.1])
+    >>> binary = Spacetime([-0.75, 0.75], [1.0, 1.1])
 
     This defines two black holes, with the locations mirrored but different
     masses.
@@ -88,7 +88,7 @@ class spacetime:
 #            assert np.all(np.array(z_positions) >= 0.0)
 
 
-class trappedsurface:
+class TrappedSurface:
 
     r"""
     Store any trapped surface, centred on a particular point.
@@ -100,7 +100,7 @@ class trappedsurface:
     Parameters
     ----------
 
-    spacetime : spacetime
+    spacetime : Spacetime
         The spacetime on which the trapped surface lives.
     z_centre : float
         The z-coordinate about which the polar coordinate system describing
@@ -109,7 +109,7 @@ class trappedsurface:
     See also
     --------
 
-    spacetime : class defining the spacetime.
+    Spacetime : class defining the spacetime.
 
     Notes
     -----
@@ -136,8 +136,8 @@ class trappedsurface:
     Examples
     --------
 
-    >>> schwarzschild = spacetime([0.0], [1.0], True)
-    >>> ts1 = trappedsurface(schwarzschild)
+    >>> schwarzschild = Spacetime([0.0], [1.0], True)
+    >>> ts1 = TrappedSurface(schwarzschild)
     >>> ts1.find_r0([0.49, 0.51])
     >>> ts1.solve_given_r0()
     >>> ts1.convert_to_cartesian()
@@ -477,7 +477,7 @@ class trappedsurface:
         ax.axis('equal')
 
 
-def FindHorizonBinarySymmetric(z=0.5, mass=1.0):
+def find_horizon_binary_symmetric(z=0.5, mass=1.0):
     r"""
     Utility function to find horizons for reflection symmetric case.
 
@@ -504,13 +504,13 @@ def FindHorizonBinarySymmetric(z=0.5, mass=1.0):
     Returns
     -------
 
-    ts : trappedsurface
+    ts : TrappedSurface
         Only returns the single surface found, expected to be the common
         horizon.
     """
 
-    st = spacetime([-z, z], [mass, mass], True)
-    ts = trappedsurface(st, 0.0)
+    st = Spacetime([-z, z], [mass, mass], True)
+    ts = TrappedSurface(st, 0.0)
     # An empirical formula for the required initial guess
     # (ie the value of r0, or h, at theta = 0)
     r0_empirical = mass * (1.0 - 0.0383 * z + 0.945 * z ** 2 - 0.522 * z ** 3)
@@ -533,7 +533,7 @@ def FindHorizonBinarySymmetric(z=0.5, mass=1.0):
     return ts
 
 
-def FindInnerOuterHorizonBinarySymmetric(z=0.5, mass=1.0):
+def find_inner_outer_horizon_binary_symmetric(z=0.5, mass=1.0):
     r"""
     Utility function to find horizons for reflection symmetric case.
 
@@ -564,13 +564,13 @@ def FindInnerOuterHorizonBinarySymmetric(z=0.5, mass=1.0):
     Returns
     -------
 
-    ts1, ts2 : trappedsurface
+    ts1, ts2 : TrappedSurface
         Returns the trapped surfaces found.
     """
 
-    st = spacetime([-z, z], [mass, mass], True)
-    ts1 = trappedsurface(st, 0.0)
-    ts2 = trappedsurface(st, 0.0)
+    st = Spacetime([-z, z], [mass, mass], True)
+    ts1 = TrappedSurface(st, 0.0)
+    ts2 = TrappedSurface(st, 0.0)
     # An empirical formula for the required initial guess
     # (ie the value of r0, or h, at theta = 0)
     r0_empirical = mass * (1.0 - 0.0383 * z + 0.945 * z ** 2 - 0.522 * z ** 3)
@@ -608,7 +608,7 @@ def FindInnerOuterHorizonBinarySymmetric(z=0.5, mass=1.0):
     return ts1, ts2
 
 
-def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
+def find_individual_horizon_binary_symmetric(z=0.5, mass=1.0):
     r"""
     Utility function to find horizons for reflection symmetric case.
 
@@ -636,13 +636,13 @@ def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
     Returns
     -------
 
-    ts1, ts2 : trappedsurface
+    ts1, ts2 : TrappedSurface
         Returns the trapped surfaces found.
     """
 
-    st = spacetime([-z, z], [mass, mass], True)
-    ts1 = trappedsurface(st, -z)
-    ts2 = trappedsurface(st,  z)
+    st = Spacetime([-z, z], [mass, mass], True)
+    ts1 = TrappedSurface(st, -z)
+    ts2 = TrappedSurface(st,  z)
     # An empirical formula for the required initial guess
     # (ie the value of r0, or h, at theta = 0)
     r0_close = mass * \
@@ -660,7 +660,7 @@ def FindIndividualHorizonBinarySymmetric(z=0.5, mass=1.0):
     return ts1, ts2
 
 
-def FindHorizonBinary(z=0.5, mass1=1.0, mass2=1.0):
+def find_horizon_binary(z=0.5, mass1=1.0, mass2=1.0):
     r"""
     Utility function to find horizons for the general case.
 
@@ -688,13 +688,13 @@ def FindHorizonBinary(z=0.5, mass1=1.0, mass2=1.0):
     Returns
     -------
 
-    ts : trappedsurface
+    ts : TrappedSurface
         Only returns the single surface found, expected to be the common
         horizon.
     """
 
-    st = spacetime([-z, z], [mass1, mass2])
-    ts = trappedsurface(st, 0.0)
+    st = Spacetime([-z, z], [mass1, mass2])
+    ts = TrappedSurface(st, 0.0)
     # An empirical formula for the required initial guess
     # (ie the value of r0, or h, at theta = 0)
     # This really is just a guess based on the symmetric case.
@@ -709,14 +709,14 @@ def FindHorizonBinary(z=0.5, mass1=1.0, mass2=1.0):
     return ts
 
 
-def PlotHorizon3d(tss):
+def plot_horizon_3d(tss):
     """
     Plot a list of horizons.
 
     Parameters
     ----------
 
-    tss : list of trappedsurface
+    tss : list of TrappedSurface
         All the trapped surfaces to visualize.
     """
     from mayavi import mlab
@@ -736,7 +736,7 @@ def PlotHorizon3d(tss):
     mlab.show()
 
 
-def SolvePlotSymmetric(z=0.5, mass=1.0):
+def solve_plot_symmetric(z=0.5, mass=1.0):
     r"""
     Utility function to find horizons for reflection symmetric case.
 
@@ -761,7 +761,7 @@ def SolvePlotSymmetric(z=0.5, mass=1.0):
         The mass of the singularities.
     """
 
-    ts = FindHorizonBinarySymmetric(z, mass)
+    ts = find_horizon_binary_symmetric(z, mass)
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ts.plot_2d(ax)
@@ -770,7 +770,7 @@ def SolvePlotSymmetric(z=0.5, mass=1.0):
     return fig
 
 
-def SolvePlotSymmetric3d(z=0.5, mass=1.0):
+def solve_plot_symmetric_3d(z=0.5, mass=1.0):
     r"""
     Utility function to plot horizon in 3d for reflection symmetric case.
 
@@ -795,11 +795,11 @@ def SolvePlotSymmetric3d(z=0.5, mass=1.0):
         The mass of the singularities.
     """
 
-    ts = FindHorizonBinarySymmetric(z, mass)
-    PlotHorizon3d([ts])
+    ts = find_horizon_binary_symmetric(z, mass)
+    plot_horizon_3d([ts])
 
 
-def SolvePlotBinary(z=0.5, mass1=1.0, mass2=1.0):
+def solve_plot_binary(z=0.5, mass1=1.0, mass2=1.0):
     r"""
     Utility function to find horizons for general case.
 
@@ -822,7 +822,7 @@ def SolvePlotBinary(z=0.5, mass1=1.0, mass2=1.0):
         The mass of the singularities.
     """
 
-    ts = FindHorizonBinary(z, mass1, mass2)
+    ts = find_horizon_binary(z, mass1, mass2)
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ts.plot_2d(ax)
@@ -831,7 +831,7 @@ def SolvePlotBinary(z=0.5, mass1=1.0, mass2=1.0):
     return fig
 
 
-def SolvePlotBinary3d(z=0.5, mass1=1.0, mass2=1.0):
+def solve_plot_binary3d(z=0.5, mass1=1.0, mass2=1.0):
     r"""
     Utility function to plot horizons in 3d for general case.
 
@@ -854,13 +854,13 @@ def SolvePlotBinary3d(z=0.5, mass1=1.0, mass2=1.0):
         The mass of the singularities.
     """
 
-    ts = FindHorizonBinary(z, mass1, mass2)
-    PlotHorizon3d([ts])
+    ts = find_horizon_binary(z, mass1, mass2)
+    plot_horizon_3d([ts])
 
 
 if __name__ == "__main__":
     # SolvePlotSymmetric()
-    st = spacetime([-0.5, 0.5], [1.0, 1.0])
-    ts = trappedsurface(st)
+    st = Spacetime([-0.5, 0.5], [1.0, 1.0])
+    ts = TrappedSurface(st)
     ts.find_r0([1.0, 1.0])
     ts.solve_given_r0()
