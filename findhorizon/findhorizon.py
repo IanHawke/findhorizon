@@ -140,8 +140,8 @@ class TrappedSurface:
     >>> ts1 = TrappedSurface(schwarzschild)
     >>> ts1.find_r0([0.49, 0.51])
     >>> ts1.solve_given_r0()
-    >>> ts1.r0
-    [0.49999999998623335]
+    >>> print(round(ts1.r0[0], 9))
+    0.5
 
     This example first constructs the Schwarzschild spacetime which, in this
     coordinate system, has the horizon with radius 0.5. The trapped surface
