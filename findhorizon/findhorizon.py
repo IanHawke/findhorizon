@@ -831,7 +831,7 @@ def solve_plot_binary(z=0.5, mass1=1.0, mass2=1.0):
     return fig
 
 
-def solve_plot_binary3d(z=0.5, mass1=1.0, mass2=1.0):
+def solve_plot_binary_3d(z=0.5, mass1=1.0, mass2=1.0):
     r"""
     Utility function to plot horizons in 3d for general case.
 
