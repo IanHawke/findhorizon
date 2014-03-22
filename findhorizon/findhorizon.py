@@ -140,15 +140,13 @@ class TrappedSurface:
     >>> ts1 = TrappedSurface(schwarzschild)
     >>> ts1.find_r0([0.49, 0.51])
     >>> ts1.solve_given_r0()
-    >>> ts1.convert_to_cartesian()
-    >>> plt.plot(ts1.x, ts1.z)
-    >>> plt.show()
+    >>> ts1.r0
+    [0.49999999998623335]
 
     This example first constructs the Schwarzschild spacetime which, in this
     coordinate system, has the horizon with radius 0.5. The trapped surface
     is set up, the location of the trapped surface at :math:`\theta = 0` is
-    found, then the complete surface constructed first in polar coordinates,
-    then in cartesians. Finally the horizon is plotted in the x-z plane.
+    found, which is (to the solver accuracy) at 0.5.
     """
 
     def __init__(self, spacetime, z_centre=0.0):
@@ -859,8 +857,9 @@ def solve_plot_binary_3d(z=0.5, mass1=1.0, mass2=1.0):
 
 
 if __name__ == "__main__":
-    # SolvePlotSymmetric()
-    st = Spacetime([-0.5, 0.5], [1.0, 1.0])
-    ts = TrappedSurface(st)
-    ts.find_r0([1.0, 1.0])
-    ts.solve_given_r0()
+#    st = Spacetime([-0.5, 0.5], [1.0, 1.0])
+#    ts = TrappedSurface(st)
+#    ts.find_r0([1.0, 1.0])
+#    ts.solve_given_r0()
+    import doctest
+    doctest.testmod()
