@@ -80,12 +80,34 @@ class Spacetime:
         """
 
         self.reflection_symmetric = reflection_symmetric
+
+        if reflection_symmetric:
+            # Enforce reflection symmetry, in case only positive terms
+            # passed in.
+            z_plus, z_index = np.unique(np.abs(z_positions),
+                                        unique_index=True)
+            if (z_plus[0] < np.spacing(1)):  # One singularity at origin
+                z_symm = np.zeros((2*len(z_plus)-1, 1))
+                masses_symm = np.zeros_like(z_symm)
+                z_symm[0] = 0.0
+                z_symm[1:len(z_plus)] = z_plus[1:]
+                z_symm[len(z_plus):] = -z_plus[1:]
+                masses_symm[0] = masses[z_index[0]]
+                masses_symm[1:len(z_plus)] = masses[z_index[1:]]
+                masses_symm[len(z_plus):] = masses[z_index[1:]]
+            else:  # No singularities at origin
+                z_symm = np.zeros((2*len(z_plus), 1))
+                masses_symm = np.zeros_like(z_symm)
+                z_symm[len(z_plus)] = z_plus
+                z_symm[len(z_plus):] = -z_plus
+                masses_symm[1:len(z_plus)] = masses[z_index]
+                masses_symm[len(z_plus):] = masses[z_index]
+            z_positions = z_symm
+            masses = masses_symm
+
         self.z_positions = np.array(z_positions)
         self.masses = np.array(masses)
         self.N = len(z_positions)
-
-#        if reflection_symmetric:
-#            assert np.all(np.array(z_positions) >= 0.0)
 
 
 class TrappedSurface:
@@ -183,7 +205,8 @@ class TrappedSurface:
         z0_minus_zi = np.zeros_like(z_i)
         for i in range(len(z_i)):
             z0_minus_zi[i] = self.z_centre - z_i[i]
-            distance_i[i] = np.sqrt(h ** 2 + 2.0 * z0_minus_zi[i] * h * np.cos(theta)
+            distance_i[i] = np.sqrt(h ** 2 +
+                                    2.0 * z0_minus_zi[i] * h * np.cos(theta)
                                     + z0_minus_zi[i] ** 2)
 
         C2 = 1.0 / (1.0 + (dhdtheta / h) ** 2)
@@ -197,9 +220,9 @@ class TrappedSurface:
         dpsi_dtheta = 0.0
         for i in range(len(m_i)):
             psi += 0.5 * m_i[i] / distance_i[i]
-            dpsi_dr -= 0.5 * m_i[i] * (h + z0_minus_zi[i] * np.cos(theta)) / \
+            dpsi_dr -= 0.5 * m_i[i] * (h + z0_minus_zi[i] * np.cos(theta)) /\
                 distance_i[i] ** 3
-            dpsi_dtheta += 0.5 * m_i[i] * h * z0_minus_zi[i] * np.sin(theta) / \
+            dpsi_dtheta += 0.5 * m_i[i] * h * z0_minus_zi[i] * np.sin(theta) /\
                 distance_i[i] ** 3
 
         dHdtheta = np.zeros_like(H)
@@ -697,7 +720,8 @@ def find_horizon_binary(z=0.5, mass1=1.0, mass2=1.0):
     # (ie the value of r0, or h, at theta = 0)
     # This really is just a guess based on the symmetric case.
     zom = 2.0 * z / (mass1 + mass2)
-    r0_empirical = (1.0 - 0.0383 * zom + 0.945 * zom ** 2 - 0.522 * zom ** 3) * \
+    r0_empirical = (1.0 - 0.0383 * zom + 0.945 * zom ** 2 -
+                    0.522 * zom ** 3) * \
         (mass1 + mass2) / 2.0
     r0_empirical = max(r0_empirical, z + 0.5 * max(mass1, mass2))
     initial_guess = [r0_empirical, r0_empirical]
