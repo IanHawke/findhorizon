@@ -85,16 +85,18 @@ class Spacetime:
             # Enforce reflection symmetry, in case only positive terms
             # passed in.
             z_plus, z_index = np.unique(np.abs(z_positions),
-                                        unique_index=True)
+                                        return_index=True)
             if (z_plus[0] < np.spacing(1)):  # One singularity at origin
                 z_symm = np.zeros((2*len(z_plus)-1, 1))
                 masses_symm = np.zeros_like(z_symm)
                 z_symm[0] = 0.0
-                z_symm[1:len(z_plus)] = z_plus[1:]
-                z_symm[len(z_plus):] = -z_plus[1:]
+                if (len(z_plus) > 1):
+                    z_symm[1:len(z_plus)] = z_plus[1:]
+                    z_symm[len(z_plus):] = -z_plus[1:]
                 masses_symm[0] = masses[z_index[0]]
-                masses_symm[1:len(z_plus)] = masses[z_index[1:]]
-                masses_symm[len(z_plus):] = masses[z_index[1:]]
+                if (len(z_plus) > 1):
+                    masses_symm[1:len(z_plus)] = masses[z_index[1:]]
+                    masses_symm[len(z_plus):] = masses[z_index[1:]]
             else:  # No singularities at origin
                 z_symm = np.zeros((2*len(z_plus), 1))
                 masses_symm = np.zeros_like(z_symm)
