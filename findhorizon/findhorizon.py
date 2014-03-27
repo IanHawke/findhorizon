@@ -579,7 +579,7 @@ def find_inner_outer_horizon_binary_symmetric(z=0.5, mass=1.0):
         r0 = np.linspace(0.95 * r0_empirical, 1.05 * r0_empirical)
         phi = np.zeros_like(r0)
         for i in range(len(r0)):
-            phi[i] = ts.shooting_function(r0[i])
+            phi[i] = ts1.shooting_function(r0[i])
         initial_guess = [r0[np.argmin(phi)], r0[-1]]
         ts1.find_r0(initial_guess)
     ts1.solve_given_r0()
@@ -598,7 +598,7 @@ def find_inner_outer_horizon_binary_symmetric(z=0.5, mass=1.0):
         r0 = np.linspace(0.95 * r0_empirical, 1.05 * r0_empirical)
         phi = np.zeros_like(r0)
         for i in range(len(r0)):
-            phi[i] = ts.shooting_function(r0[i])
+            phi[i] = ts2.shooting_function(r0[i])
         initial_guess = [r0[np.argmin(phi)], r0[-1]]
         ts2.find_r0(initial_guess)
     ts2.solve_given_r0()
