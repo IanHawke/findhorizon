@@ -88,6 +88,8 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+# Fix for numpydoc, see http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
+numpydoc_show_class_members = False
 
 # -- Options for HTML output ---------------------------------------------------
 
