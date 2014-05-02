@@ -100,9 +100,9 @@ class Spacetime:
             else:  # No singularities at origin
                 z_symm = np.zeros((2*len(z_plus), 1))
                 masses_symm = np.zeros_like(z_symm)
-                z_symm[len(z_plus)] = z_plus
+                z_symm[:len(z_plus)] = z_plus
                 z_symm[len(z_plus):] = -z_plus
-                masses_symm[1:len(z_plus)] = masses[z_index]
+                masses_symm[:len(z_plus)] = masses[z_index]
                 masses_symm[len(z_plus):] = masses[z_index]
             z_positions = z_symm
             masses = masses_symm
